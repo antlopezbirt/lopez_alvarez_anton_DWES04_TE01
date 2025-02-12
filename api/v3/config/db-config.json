@@ -1,6 +1,6 @@
 {
-    "host": "192.168.0.116",
+    "host": "localhost",
     "user": "root",
     "password": "",
-    "dbName": "dwes"
+    "dbName": "dwes04"
 }

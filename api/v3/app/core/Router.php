@@ -22,36 +22,6 @@ class Router {
         $this->routes[$route] = $params;
     }
 
-    public function dispatch($url) {
-
-        // Se carga la parte inicial de la ruta
-        $url = str_replace(BASE_URL, '', $url);
-
-        //$url = parse_url($url, PHP_URL_PATH);
-
-        // Comprueba que la url existe en el array de rutas,
-        // e instancia el controlador y método correspondientes
-        if (array_key_exists($url, $this->routes)) {
-            // Guarda en $controller el controlador y en $method el método con explode
-            list($controller, $method) = explode('@', $this->routes[$url]);
-
-            // Agrega el namespace al controlador
-            $controller = 'app\\controllers\\' . $controller;
-
-            // Si existe dicho controlador y dicho método, instancia el controlador y llama al método
-            if(class_exists($controller) && method_exists($controller, $method)) {
-                $controllerInstance = new $controller();
-                $controllerInstance->$method();
-            } else {
-                $this->sendNotFound();
-
-            }
-        } else {
-            $this->sendNotFound();
-
-        }
-    }
-
     public function match($url) {
 
         // Elimina la base de la URL solicitada

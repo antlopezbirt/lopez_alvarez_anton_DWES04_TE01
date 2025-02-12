@@ -2,17 +2,15 @@
 
 namespace app\controllers;
 
-use app\utils\JsonFileHandler;
-use app\models\ItemModel;
+use app\models\DAO\ItemDAO;
 use app\utils\ApiResponse;
-use config;
 
 class ItemController {
 
-    private $dataHandler;
+    private $itemDao;
 
     public function __construct() {
-        $this->dataHandler = new JsonFileHandler(DATA_FILE);
+        $this->itemDao = new ItemDAO();
     }
 
     public function index() {
@@ -21,7 +19,7 @@ class ItemController {
 
     public function getAll() {
 
-        $items = $this->dataHandler->readAllItems();
+        $items = $this->itemDao->getAllItems();
 
         if(isset($items)) {
             $response = new ApiResponse('OK', 200, 'Todos los ítems', $items);
@@ -35,30 +33,32 @@ class ItemController {
 
     public function getById($id) {
 
-        // Coge todos los items
-        $items = $this->dataHandler->readAllItems();
+        $item = $this->itemDao->getItemById($id);
 
-        // Los recorre en busca del ID recibido
-        foreach($items as $item) {
-            
-            // Si coincide el ID, se envía la respuesta
-            if($item->getId() == $id) {
-                $response = new ApiResponse('OK', 200, 'Ítem con ID ' . $id, $item);
-                return $this->sendJsonResponse($response);
-            }
+        // Si coincide el ID, se envía la respuesta
+        if(isset($item)) {
+            $response = new ApiResponse('OK', 200, 'Ítem con ID ' . $id, $item);
+            return $this->sendJsonResponse($response);
+        } else {
+            // Si llega hasta aquí, no lo ha encontrado
+            $response = new ApiResponse('ERROR: Ítem no encontrado', 404, 'No existe un ítem con ID ' . $id, null);
+            return $this->sendJsonResponse($response);
         }
-        
-        // Si llega hasta aquí, no lo ha encontrado
-        $response = new ApiResponse('ERROR: Ítem no encontrado', 404, 'No existe un ítem con ID ' . $id, null);
-        return $this->sendJsonResponse($response);
     }
 
     public function create($datosJson) {
 
-        // Crea nuevo ID
-        $newId = $this->generateNewId();
+        $itemCreado = $this->itemDao->create($datosJson);
 
-        // Instancia un ItemModel con los datos para guardarlo
+        if ($itemCreado) {
+            $response = new ApiResponse('Created', 201, 'Item guardado', $itemCreado);
+            return $this->sendJsonResponse($response);
+        } else {
+            $response = new ApiResponse('ERROR', 500, 'No se pudo guardar', $itemCreado);
+            return $this->sendJsonResponse($response);
+        }
+
+        /* // Instancia un ItemModel con los datos para guardarlo
         $item = new ItemModel($newId, $datosJson['title'], $datosJson['artist'],
             $datosJson['format'], $datosJson['year'], $datosJson['origYear'], 
             $datosJson['label'], $datosJson['rating'], $datosJson['comment'], 
@@ -73,12 +73,12 @@ class ItemController {
         } else {
             $response = new ApiResponse('ERROR', 500, 'No se pudo guardar', $item);
             return $this->sendJsonResponse($response);
-        }
+        } */
     }
 
     public function update($datosJson) {
 
-        // Extrae el ID en una variable
+        /* // Extrae el ID en una variable
         $id = $datosJson['id'];
         
         // Recoge todos los items
@@ -110,13 +110,13 @@ class ItemController {
         // Si llega hasta aquí, no lo ha encontrado
         $response = new ApiResponse('ERROR: Ítem no encontrado', 404, 'No existe un ítem con ID ' . $id, null);
         return $this->sendJsonResponse($response);
-
+ */
         
     }
 
     public function delete($datosJson) {
         
-        $id = $datosJson['id'];
+        /* $id = $datosJson['id'];
 
         $items = $this->dataHandler->readAllItems();
 
@@ -140,7 +140,7 @@ class ItemController {
 
         // No se encontró el item
         $response = new ApiResponse('ERROR', 404, 'No existe un ítem con ID ' . $id . '.', null);
-        return $this->sendJsonResponse($response);
+        return $this->sendJsonResponse($response); */
     }
 
 
@@ -150,20 +150,6 @@ class ItemController {
         header('Content-Type: application/json');
         http_response_code($response->getCode());
         echo $response->toJson();
-    }
-
-    private function generateNewId() {
-
-        // Obtiene todos los items
-        $items = $this->dataHandler->readAllItems();
-
-        $newId = 0;
-
-        // Recorre los items y obtiene el máximo ID
-        foreach($items as $item) $newId = max($item->getId(), $newId);
-
-        // Devuelve el máximo ID más uno
-        return $newId + 1;
     }
 
 }

@@ -8,31 +8,36 @@ class ItemDTO implements JsonSerializable {
 
     private $id;
     private $title;
-    private $artistName;
+    private $artist;
     private $format;
     private $year;
+    private $origYear;
     private $label;
     private $rating;
     private $comment;
     private $buyPrice;
     private $condition;
+    private $sellPrice;
+    private $externalIds;
 
     public function __construct(
-        $id, $title, $artistName, $format, $year, $label, $rating, $comment, 
-        $buyPrice, $condition
+        $id, $title, $artist, $format, $year, $origYear, $label, $rating, $comment, 
+        $buyPrice, $condition, $sellPrice, $externalIds = []
     ) {
 
         $this->id = $id;
         $this->title = $title;
-        $this->artistName = $artistName;
+        $this->artist = $artist;
         $this->format = $format;
         $this->year = $year;
+        $this->year = $origYear;
         $this->label = $label;
         $this->rating = $rating;
         $this->comment = $comment;
         $this->buyPrice = $buyPrice;
         $this->condition = $condition;
-
+        $this->sellPrice = $sellPrice;
+        $this->externalIds = $externalIds;
     }
 
     public function jsonSerialize(): mixed
@@ -64,9 +69,9 @@ class ItemDTO implements JsonSerializable {
     /**
      * Get the value of artist
      */
-    public function getArtistName()
+    public function getArtist()
     {
-        return $this->artistName;
+        return $this->artist;
     }
 
 
@@ -137,4 +142,29 @@ class ItemDTO implements JsonSerializable {
         return $this->condition;
     }
 
+
+    /**
+     * Get the value of externalIds
+     */
+    public function getExternalIds()
+    {
+        return $this->externalIds;
+    }
+
+
+    /**
+     * Get the value of origYear
+     */
+    public function getOrigYear()
+    {
+        return $this->origYear;
+    }
+
+    /**
+     * Get the value of sellPrice
+     */
+    public function getSellPrice()
+    {
+        return $this->sellPrice;
+    }
 }

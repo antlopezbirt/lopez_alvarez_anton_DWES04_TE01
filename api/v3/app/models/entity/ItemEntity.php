@@ -6,7 +6,7 @@ class ItemEntity {
     
     private $id;
     private $title;
-    private $artistId;
+    private $artist;
     private $format;
     private $year;
     private $origYear;
@@ -17,13 +17,15 @@ class ItemEntity {
     private $condition;
     private $sellPrice;
 
-    public function __construct($id, $title, $artistId, $format, $year, $origYear,
-                                $label, $rating, $comment, $buyPrice, $condition,
-                                $sellPrice) {
+    public function __construct(
+        int $id, string $title, string $artist, string $format, int $year, 
+        int $origYear, string $label, int $rating, string $comment, float $buyPrice, 
+        string $condition, float $sellPrice
+    ) {
 
         $this->id = $id;
         $this->title = $title;
-        $this->artistId = $artistId;
+        $this->artist = $artist;
         $this->format = $format;
         $this->year = $year;
         $this->origYear = $origYear;
@@ -75,17 +77,17 @@ class ItemEntity {
     /**
      * Get the value of artist
      */
-    public function getArtistId()
+    public function getArtist()
     {
-        return $this->artistId;
+        return $this->artist;
     }
 
     /**
      * Set the value of artist
      */
-    public function setArtistId($artistId): self
+    public function setArtistId($artist): self
     {
-        $this->artistId = $artistId;
+        $this->artist = $artist;
 
         return $this;
     }
