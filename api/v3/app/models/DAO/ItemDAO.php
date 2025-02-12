@@ -17,43 +17,8 @@ class ItemDAO {
         $this->db = Database::getInstance();
     }
 
-    // Sin usar entidades
-    // public function getAllItems() {
 
-    //     $conn = $this->db->getConnection();
-    //     $query = "SELECT item.*, JSON_OBJECTAGG(externalid.supplier, externalid.value) AS externalids ";
-    //     $query .= "FROM item JOIN externalid ON item.id = externalid.itemid GROUP BY item.id";
-    //     $stmt = $conn->query($query);
-    //     $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-    //     // Genera y devuelve un array de DTOs con los datos recibidos de la BD
-        
-    //     $itemsDTO = [];
-
-    //     for($i = 0; $i < count($result); $i++) {
-    //         $fila = $result[$i];
-    //         $itemsDTO[] = new ItemDTO(
-    //             $fila['id'],
-    //             $fila['title'],
-    //             $fila['artist'],
-    //             $fila['format'],
-    //             $fila['year'],
-    //             $fila['origyear'],
-    //             $fila['label'],
-    //             $fila['rating'],
-    //             $fila['comment'],
-    //             $fila['buyprice'],
-    //             $fila['condition'],
-    //             $fila['sellPrice'],
-    //             json_decode($fila['externalids'])
-    //         );
-    //     }
-
-    //     return $itemsDTO;
-
-    // }
-
-    // Usando entidades
+    // Devuelve todos los items (versión que usa las entities definidas)
 
     public function getAllItems() {
 
@@ -121,6 +86,8 @@ class ItemDAO {
 
     }
 
+    // Devuelve un DTO de un item buscado por ID (Versión sin entities)
+    
     public function getItemById($id) {
 
         $conn = $this->db->getConnection();
@@ -151,6 +118,143 @@ class ItemDAO {
 
     }
 
+
+    // Devuelve todos los items de un artista (versión sin hacer uso de las entities)
+    public function getItemsByArtist($artista) {
+
+        $conn = $this->db->getConnection();
+        $query = "SELECT item.*, GROUP_CONCAT(CONCAT_WS('_',externalid.supplier,externalid.value)) AS externalids ";
+        $query .= "FROM item JOIN externalid ON item.id = externalid.itemid WHERE LOWER (item.artist) = LOWER('{$artista}') GROUP BY item.id";
+        $stmt = $conn->query($query);
+        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Genera y devuelve un array de DTOs con los datos recibidos de la BD
+        
+        $itemsDTO = [];
+
+        for($i = 0; $i < count($result); $i++) {
+            $fila = $result[$i];
+
+            $externalIdsBruto = explode(',', $fila['externalids']);
+            $externalIds = [];
+            foreach($externalIdsBruto as $unExternalId) {
+                list($supplier, $value) = explode('_', $unExternalId);
+                $externalIds[$supplier] = $value;
+            }
+
+            echo "Original year: " . $fila['origyear'];
+            
+            $itemsDTO[] = new ItemDTO(
+                $fila['id'],
+                $fila['title'],
+                $fila['artist'],
+                $fila['format'],
+                $fila['year'],
+                $fila['origyear'],
+                $fila['label'],
+                $fila['rating'],
+                $fila['comment'],
+                $fila['buyprice'],
+                $fila['condition'],
+                $fila['sellprice'],
+                $externalIds
+            );
+        }
+
+        return $itemsDTO;
+    }
+
+
+    // Devuelve todos los items de un artista (versión sin hacer uso de las entities)
+    public function getItemsByFormat($formato) {
+
+        $conn = $this->db->getConnection();
+        $query = "SELECT item.*, GROUP_CONCAT(CONCAT_WS('_',externalid.supplier,externalid.value)) AS externalids ";
+        $query .= "FROM item JOIN externalid ON item.id = externalid.itemid WHERE LOWER (item.format) = LOWER('{$formato}') GROUP BY item.id";
+        $stmt = $conn->query($query);
+        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Genera y devuelve un array de DTOs con los datos recibidos de la BD
+        
+        $itemsDTO = [];
+
+        for($i = 0; $i < count($result); $i++) {
+            $fila = $result[$i];
+
+            $externalIdsBruto = explode(',', $fila['externalids']);
+            $externalIds = [];
+
+            foreach($externalIdsBruto as $unExternalId) {
+                list($supplier, $value) = explode('_', $unExternalId);
+                $externalIds[$supplier] = $value;
+            }
+            
+            $itemsDTO[] = new ItemDTO(
+                $fila['id'],
+                $fila['title'],
+                $fila['artist'],
+                $fila['format'],
+                $fila['year'],
+                $fila['origyear'],
+                $fila['label'],
+                $fila['rating'],
+                $fila['comment'],
+                $fila['buyprice'],
+                $fila['condition'],
+                $fila['sellprice'],
+                $externalIds
+            );
+        }
+
+        return $itemsDTO;
+    }
+
+
+    // Devuelve todos los items de un artista (versión sin hacer uso de las entities)
+    public function sortItemsByKey($clave, $orden) {
+
+        $conn = $this->db->getConnection();
+        $query = "SELECT item.*, GROUP_CONCAT(CONCAT_WS('_',externalid.supplier,externalid.value)) AS externalids ";
+        $query .= "FROM item JOIN externalid ON item.id = externalid.itemid GROUP BY item.id ORDER BY `{$clave}` {$orden}";
+        $stmt = $conn->query($query);
+        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Genera y devuelve un array de DTOs con los datos recibidos de la BD
+        
+        $itemsDTO = [];
+
+        for($i = 0; $i < count($result); $i++) {
+            $fila = $result[$i];
+
+            $externalIdsBruto = explode(',', $fila['externalids']);
+            $externalIds = [];
+            foreach($externalIdsBruto as $unExternalId) {
+                list($supplier, $value) = explode('_', $unExternalId);
+                $externalIds[$supplier] = $value;
+            }
+            
+            
+            $itemsDTO[] = new ItemDTO(
+                $fila['id'],
+                $fila['title'],
+                $fila['artist'],
+                $fila['format'],
+                $fila['year'],
+                $fila['origyear'],
+                $fila['label'],
+                $fila['rating'],
+                $fila['comment'],
+                $fila['buyprice'],
+                $fila['condition'],
+                $fila['sellprice'],
+                $externalIds
+            );
+        }
+
+        return $itemsDTO;
+    }
+
+
     public function create($datosJson) {
 
         // Se modelan los datos recibidos a un DTO
@@ -167,10 +271,6 @@ class ItemDAO {
         // ------------------- Inserción en la tabla ITEM
 
         $query = "INSERT INTO item (`title`, `artist`, `format`, `year`, `origyear`, `label`, `rating`, `comment`, `buyprice`, `condition`, `sellprice`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-        //$query .= "(title, format) VALUES (?, ?)";
-        //$query .= "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-        //$query .= "VALUES (?, ?)";
-
 
         $stmt = $conn->prepare($query);
 
@@ -192,6 +292,8 @@ class ItemDAO {
 
 
         // --------------- Inserciones en la tabla EXTERNALIDS
+
+        // Comienza la transacción
         $conn->beginTransaction();
 
         foreach($datosJson['externalIds'] as $clave => $valor) {
@@ -205,6 +307,8 @@ class ItemDAO {
                 ]
             );
         }
+
+        // Finaliza la transacción
         $conn->commit();
 
         return $this->getItemById($lastId);

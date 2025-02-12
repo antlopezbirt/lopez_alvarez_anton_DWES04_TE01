@@ -46,6 +46,63 @@ class ItemController {
         }
     }
 
+
+
+
+    public function getByArtist($artist) {
+
+        $artist = ucwords(str_replace('-', ' ', $artist));
+
+        $items = $this->itemDao->getItemsByArtist($artist);
+
+        if(isset($items)) {
+            $response = new ApiResponse('OK', 200, 'Todos los ítems del artista solicitado (' . $artist . ')', $items);
+            return $this->sendJsonResponse($response);
+        } else {
+            $response = new ApiResponse('ERROR ', 404, 'ERROR: Artista no encontrado (' . $artist . ')', null);
+            return $this->sendJsonResponse($response);
+        }
+    }
+
+
+    public function getByFormat($format) {
+
+        $items = $this->itemDao->getItemsByFormat($format);
+
+        if(isset($items)) {
+            $response = new ApiResponse('OK', 200, 'Todos los ítems del formato solicitado (' . $format . ')', $items);
+            return $this->sendJsonResponse($response);
+        } else {
+            $response = new ApiResponse('ERROR ', 404, 'ERROR: Formato no encontrado (' . $format . ')', null);
+            return $this->sendJsonResponse($response);
+        }
+    }
+
+
+
+
+    public function sortByKey($key, $order) {
+
+        if ($key === 'externalIds') {
+            // No se puede ordenar por externalIds
+            $response = new ApiResponse('ERROR ', 400, 'ERROR: No se puede ordenar por externalIds al ser un array', null);
+            return $this->sendJsonResponse($response);
+        }
+
+        $items = $this->itemDao->sortItemsByKey($key, $order);
+
+        if(isset($items)) {
+            $response = new ApiResponse('OK', 200, 'Listado de ítems ordenados según el criterio solicitado (' . $key . ', ' . $order . ')', $items);
+            return $this->sendJsonResponse($response);
+        } else {
+            $response = new ApiResponse('ERROR ', 404, 'ERROR: La clave para ordenar no existe (' . $key . ')', null);
+            return $this->sendJsonResponse($response);
+        }
+    }
+
+
+
+
     public function create($datosJson) {
 
         $itemCreado = $this->itemDao->create($datosJson);

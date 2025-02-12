@@ -20,9 +20,28 @@ class ItemDTO implements JsonSerializable {
     private $sellPrice;
     private $externalIds;
 
+    /**
+     * Constructor de la clase ItemDTO.
+     *
+     * @param int $id El ID del ítem.
+     * @param string $title El título del ítem.
+     * @param string $artist El artista del ítem.
+     * @param string $format El formato del ítem (ej. "LP", "CD").
+     * @param int $year El año de publicación del ítem.
+     * @param int $origYear El año de publicación original del ítem.
+     * @param string $label El sello discográfico.
+     * @param int $rating La calificación del ítem (de 1 a 10).
+     * @param string $comment Comentarios sobre el ítem.
+     * @param float $buyPrice El precio de compra del ítem.
+     * @param string $condition La condición del ítem (ej. "M", "NM").
+     * @param float $sellPrice El precio de venta del ítem, por defecto 0.
+     * @param array $externalIds Identificadores externos asociados al ítem, por defecto un array vacío.
+     */
+
     public function __construct(
-        $id, $title, $artist, $format, $year, $origYear, $label, $rating, $comment, 
-        $buyPrice, $condition, $sellPrice, $externalIds = []
+        int $id, string $title, string $artist, string $format, int $year, 
+        int $origYear, string $label, int $rating, string $comment, 
+        float $buyPrice, string $condition, float $sellPrice = 0, array $externalIds = []
     ) {
 
         $this->id = $id;
@@ -30,7 +49,7 @@ class ItemDTO implements JsonSerializable {
         $this->artist = $artist;
         $this->format = $format;
         $this->year = $year;
-        $this->year = $origYear;
+        $this->origYear = $origYear;
         $this->label = $label;
         $this->rating = $rating;
         $this->comment = $comment;
@@ -167,4 +186,5 @@ class ItemDTO implements JsonSerializable {
     {
         return $this->sellPrice;
     }
+
 }

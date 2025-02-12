@@ -12,6 +12,9 @@ class Router {
             '/items' => 'ItemController@index',
             '/items/get' => 'ItemController@getAll',
             '/item/get/{id}' => 'ItemController@getById',
+            '/items/artist/{artist}' => 'ItemController@getByArtist',
+            '/items/format/{format}' => 'ItemController@getByFormat',
+            '/items/order/{key}/{order}' => 'ItemController@sortByKey',
             '/item/create' => 'ItemController@create',
             '/item/update' => 'ItemController@update',
             '/item/delete' => 'ItemController@delete'
@@ -23,6 +26,17 @@ class Router {
     }
 
     public function match($url) {
+
+        // Si la query contiene espacios no es válida, devolvemos el error
+        if (str_contains(urldecode($url), ' ')) {
+            header("HTTP/1.0 403 Forbidden");
+            http_response_code(403);
+            echo 'ERROR: La URL no puede contener espacios: ' . urldecode($url);
+
+            die();
+        }
+
+        $url = urldecode($url);
 
         // Elimina la base de la URL solicitada
         $url = str_replace(BASE_URL, '', $url);
@@ -37,13 +51,13 @@ class Router {
         foreach ($this->routes as $route => $params) {
 
             // Reemplaza los {parámetros} predefinidos por un patrón regex
-            $routePattern = preg_replace('/\{[a-z0-9_]+\}/', '([a-z0-9_]+)?', $route);
+            $routePattern = preg_replace('/\{[a-z0-9\-]+\}/', '([a-z0-9\-]+)?', $route);
 
             // Escapa las barras para la regex
             $routePattern = str_replace('/', '\/', $routePattern);
 
-            // Ejecuta la regex sobre la URL recibida...
-            if (preg_match('/^' . $routePattern . '$/', $url, $matches)) {
+            // Ejecuta la regex sobre la URL recibida... (case insensitive)
+            if (preg_match('/^' . $routePattern . '$/i', $url, $matches)) {
 
                 // Si hay un parámetro por URL, se queda solo con él y desecha lo anterior
                 array_shift($matches);
