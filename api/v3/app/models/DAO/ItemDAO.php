@@ -27,7 +27,6 @@ class ItemDAO {
         $stmtItem = $conn->query($queryItem);
         $resultItem = $stmtItem->fetchAll(PDO::FETCH_ASSOC);
 
-        
         $itemsDTO = [];
 
         for($i = 0; $i < count($resultItem); $i++) {
@@ -86,41 +85,102 @@ class ItemDAO {
 
     }
 
-    // Devuelve un DTO de un item buscado por ID (Versión sin entities)
+
+
+    // // Devuelve un DTO a partir de un item buscado por ID (versión sin entities)
     
-    public function getItemById($id) {
+    // public function getItemById($id) {
+
+    //     $conn = $this->db->getConnection();
+    //     $query = "SELECT item.*, JSON_OBJECTAGG(externalid.supplier, externalid.value) AS externalids ";
+    //     $query .= "FROM item JOIN externalid ON item.id = externalid.itemid GROUP BY item.id HAVING item.id = '{$id}'";
+    //     $stmt = $conn->query($query);
+    //     $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    //     // Modela y devuelve un DTO con los datos recibidos de la BD
+        
+    //     $itemDTO[] = new ItemDTO(
+    //         $result['id'],
+    //         $result['title'],
+    //         $result['artist'],
+    //         $result['format'],
+    //         $result['year'],
+    //         $result['origyear'],
+    //         $result['label'],
+    //         $result['rating'],
+    //         $result['comment'],
+    //         $result['buyprice'],
+    //         $result['condition'],
+    //         $result['sellPrice'],
+    //         json_decode($result['externalids'])
+    //     );
+
+    //     return $itemDTO;
+
+    // }
+
+
+    // Devuelve una ItemEntity a partir de un item buscado por ID
+
+    public function getItemById(int $id) {
 
         $conn = $this->db->getConnection();
-        $query = "SELECT item.*, JSON_OBJECTAGG(externalid.supplier, externalid.value) AS externalids ";
-        $query .= "FROM item JOIN externalid ON item.id = externalid.itemid GROUP BY item.id HAVING item.id = '{$id}'";
+        $query = "SELECT * FROM item WHERE `id` = '{$id}'";
         $stmt = $conn->query($query);
         $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        // Modela y devuelve un DTO con los datos recibidos de la BD
-        
-        $itemDTO[] = new ItemDTO(
-            $result['id'],
-            $result['title'],
-            $result['artist'],
-            $result['format'],
-            $result['year'],
-            $result['origyear'],
-            $result['label'],
-            $result['rating'],
-            $result['comment'],
-            $result['buyprice'],
-            $result['condition'],
-            $result['sellPrice'],
-            json_decode($result['externalids'])
-        );
+        if(count($result)>0) {
 
-        return $itemDTO;
+            $fila = $result[0];
+
+            // Se modela la entidad del Item
+            $itemEntidad = new ItemEntity(
+                $fila['id'], $fila['title'], $fila['artist'], $fila['format'],
+                $fila['year'], $fila['origyear'], $fila['label'], $fila['rating'],
+                $fila['comment'], $fila['buyprice'], $fila['condition'], $fila['sellprice']
+            );
+
+            return $itemEntidad;
+
+        }
+
+        return false;
+
+    }
+
+
+    // Devuelve un array de entidades ExternalIdEntity a partir de un ID de item
+
+    public function getExternalIdsByItemId(int $itemId): array {
+
+        $conn = $this->db->getConnection();
+        $query = "SELECT * FROM externalid WHERE `itemid` = '{$itemId}'";
+        $stmt = $conn->query($query);
+        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $externalIdEntities = [];
+
+        for($i = 0; $i < count($result); $i++) {
+
+            $fila = $result[$i];
+
+            // Se modela una entidad ExternalIdEntity con los datos recibidos de la BD
+            $externalIdEntidad = new ExternalIdEntity(
+                $fila['id'], $fila['supplier'], $fila['value'], $fila['itemid']
+            );
+
+            $externalIdEntities[] = $externalIdEntidad;
+            
+
+        }
+
+        return $externalIdEntities;
 
     }
 
 
     // Devuelve todos los items de un artista (versión sin hacer uso de las entities)
-    public function getItemsByArtist($artista) {
+    public function getItemsByArtist(string $artista) {
 
         $conn = $this->db->getConnection();
         $query = "SELECT item.*, GROUP_CONCAT(CONCAT_WS('_',externalid.supplier,externalid.value)) AS externalids ";
@@ -166,7 +226,7 @@ class ItemDAO {
 
 
     // Devuelve todos los items de un artista (versión sin hacer uso de las entities)
-    public function getItemsByFormat($formato) {
+    public function getItemsByFormat(string $formato) {
 
         $conn = $this->db->getConnection();
         $query = "SELECT item.*, GROUP_CONCAT(CONCAT_WS('_',externalid.supplier,externalid.value)) AS externalids ";
@@ -211,7 +271,7 @@ class ItemDAO {
 
 
     // Devuelve todos los items de un artista (versión sin hacer uso de las entities)
-    public function sortItemsByKey($clave, $orden) {
+    public function sortItemsByKey(string $clave, string $orden) {
 
         $conn = $this->db->getConnection();
         $query = "SELECT item.*, GROUP_CONCAT(CONCAT_WS('_',externalid.supplier,externalid.value)) AS externalids ";
@@ -255,22 +315,15 @@ class ItemDAO {
     }
 
 
-    public function create($datosJson) {
+    public function create(array $datosJson) {
 
-        // Se modelan los datos recibidos a un DTO
-
-        $itemEntidad = new ItemEntity(
-                0, $datosJson['title'], $datosJson['artist'], $datosJson['format'],
-                $datosJson['year'], $datosJson['origYear'], $datosJson['label'], 
-                $datosJson['rating'], $datosJson['comment'], $datosJson['buyPrice'], 
-                $datosJson['condition'], $datosJson['sellPrice']
-        );
-
-        $conn = $this->db->getConnection();
+         $conn = $this->db->getConnection();
 
         // ------------------- Inserción en la tabla ITEM
 
-        $query = "INSERT INTO item (`title`, `artist`, `format`, `year`, `origyear`, `label`, `rating`, `comment`, `buyprice`, `condition`, `sellprice`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        $query = "INSERT INTO item (`title`, `artist`, `format`, `year`, `origyear`, ";
+        $query .= "`label`, `rating`, `comment`, `buyprice`, `condition`, `sellprice`) ";
+        $query .= "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         $stmt = $conn->prepare($query);
 
@@ -284,6 +337,7 @@ class ItemDAO {
                 $datosJson['condition'], $datosJson['sellPrice']
             ]
         );
+
         // Guarda el ID para usarlo como FK en la tabla de externalIds
         $lastId = $conn->lastInsertId();
 
@@ -311,15 +365,147 @@ class ItemDAO {
         // Finaliza la transacción
         $conn->commit();
 
-        return $this->getItemById($lastId);
+        return $lastId;
 
     }
 
-    public function update() {
+
+
+
+    public function updateItem(array $datosJson) {
+
+        // Extrae el ID en una variable
+        $id = $datosJson['id'];
+        
+        // Busca el item y lo recibe ya modelado a entidad
+
+        $itemEntidad = $this->getItemById($id);
+
+        // Si existe el item, actualiza la entidad, si no devuelve false
+        if($itemEntidad) {
+            foreach($datosJson as $clave => $valor) {
+                // Filtra los datos que no se deben actualizar aquí
+                if($clave != 'id' && $clave != 'externalIds') {
+                    $metodoSetter = 'set' . ucwords($clave);
+                    $itemEntidad->$metodoSetter($valor);
+                }
+            }
+
+            // Actualiza los valores en la BD a partir de la entidad
+
+            $conn = $this->db->getConnection();
+
+            $query = "UPDATE item SET `title` = ?, `artist` = ?, ";
+            $query .= "`format` = ?, `year` = ?, `origyear` = ?, ";
+            $query .= "`label` = ?, `rating` = ?, `comment` = ?, ";
+            $query .= "`buyprice` = ?, `condition` = ?, ";
+            $query .= "`sellprice` = ? WHERE `id` = ?";
+
+            $stmt = $conn->prepare($query);
+
+            // Comienza la transacción
+            $conn->beginTransaction();
+
+            $stmt->execute(
+                [
+                    $itemEntidad->getTitle(), $itemEntidad->getArtist(), $itemEntidad->getFormat(),
+                    $itemEntidad->getYear(), $itemEntidad->getOrigYear(), $itemEntidad->getLabel(), 
+                    $itemEntidad->getRating(), $itemEntidad->getComment(), $itemEntidad->getBuyPrice(), 
+                    $itemEntidad->getCondition(), $itemEntidad->getSellPrice(), $id
+                ]
+            );
+
+            // Finaliza la transacción
+            $conn->commit();
+
+
+            $itemEntidadActualizada = $this->getItemById($id);
+
+            return ($itemEntidadActualizada);
+        }
+
+        return false;
 
     }
 
-    public function delete() {
+
+
+    public function updateExternalIds(array $datosJson) {
+
+        /*
+            Si en los datos para actualizar hay externalIds lo primero que hay que 
+            hacer es eliminar de la BD todos los que pertenezcan al Item, ya que los 
+            externaIds llegan sin ID propio (son solo clave-valor), y a continuación
+            insertar los que hayan llegado.
+        */
+
+        if(array_key_exists('externalIds', $datosJson)) {
+
+            $itemId = $datosJson['id'];
+            $externalIds = $datosJson['externalIds'];
+
+            $conn = $this->db->getConnection();
+
+            // Eliminación externalIds existentes para el item en cuestion
+            $query = "DELETE FROM externalid WHERE `itemid` = ?";
+            $stmt = $conn->prepare($query);
+
+            // Comienza la transacción
+            $conn->beginTransaction();
+            $stmt->execute(
+                [
+                    $itemId
+                ]
+            );
+            // Finaliza la transacción
+            $conn->commit();
+
+            // Insercion de los externalIds recibidos
+
+            foreach($externalIds as $clave => $valor) {
+                
+                // Eliminación externalIds existentes para el item en cuestion
+                $query = "INSERT INTO externalid (`supplier`, `value`, `itemid`) ";
+                $query .= "VALUES (?, ?, ?)";
+                $stmt = $conn->prepare($query);
+
+                // Comienza la transacción
+                $conn->beginTransaction();
+                $stmt->execute(
+                    [
+                        $clave, $valor, $itemId
+                    ]
+                );
+                // Finaliza la transacción
+                $conn->commit();
+            }
+        }
+
+        // Devolvera los externalIds del item, se hayan actualizado o no, para poder construir el DTO de respuesta
+
+        return $this->getExternalIdsByItemId($itemId);
+
+    }
+
+    public function deleteItem($id) {
+
+        $conn = $this->db->getConnection();
+
+        // Al estar configurado ON DELETE CASCADE, los externalIds asociados al Item se eliminan automaticamente
+        $query = "DELETE FROM item WHERE `id` = ?";
+        $stmt = $conn->prepare($query);
+
+        // Comienza la transacción
+        $conn->beginTransaction();
+        $stmt->execute(
+            [
+                $id
+            ]
+        );
+        // Finaliza la transacción
+        $conn->commit();
+
+        return true;
 
     }
 }

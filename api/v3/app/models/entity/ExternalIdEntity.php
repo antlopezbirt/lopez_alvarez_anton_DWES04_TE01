@@ -9,8 +9,18 @@ class ExternalIdEntity {
     private $value;
     private $itemid;
 
+
+    /**
+     * Constructor de la clase ExternalIdEntity.
+     *
+     * @param int $id El ID de la entrada de externalId.
+     * @param string $supplier El proveedor del ID externo.
+     * @param string $value El valor del ID externo.
+     * @param int $itemid El ID del item al que se hace referencia
+     */
+
     public function __construct(
-        int $id, string $supplier, string $value, string $itemid
+        int $id, string $supplier, string $value, int $itemid
     ) {
 
         $this->id = $id;

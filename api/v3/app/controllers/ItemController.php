@@ -3,6 +3,7 @@
 namespace app\controllers;
 
 use app\models\DAO\ItemDAO;
+use app\models\DTO\ItemDTO;
 use app\utils\ApiResponse;
 
 class ItemController {
@@ -101,103 +102,123 @@ class ItemController {
     }
 
 
-
-
     public function create($datosJson) {
 
-        $itemCreado = $this->itemDao->create($datosJson);
+        $idItemCreado = $this->itemDao->create($datosJson);
 
-        if ($itemCreado) {
-            $response = new ApiResponse('Created', 201, 'Item guardado', $itemCreado);
+        $itemEntidadCreado = $this->itemDao->getItemById($idItemCreado);
+        $externalIdsEntidadCreados = $this->itemDao->getExternalIdsByItemId($idItemCreado);
+
+        $arrayExternalIds = [];
+
+        foreach($externalIdsEntidadCreados as $unExternalId) {
+            $arrayExternalIds[$unExternalId->getSupplier()] = $unExternalId->getValue();
+        }
+
+        if ($itemEntidadCreado) {
+
+            // Mapea todo al un DTO para devolverlo al cliente
+            $itemDTO = new ItemDTO(
+                $itemEntidadCreado->getId(),
+                $itemEntidadCreado->getTitle(),
+                $itemEntidadCreado->getArtist(),
+                $itemEntidadCreado->getFormat(),
+                $itemEntidadCreado->getYear(),
+                $itemEntidadCreado->getOrigYear(),
+                $itemEntidadCreado->getLabel(),
+                $itemEntidadCreado->getRating(),
+                $itemEntidadCreado->getComment(),
+                $itemEntidadCreado->getBuyprice(),
+                $itemEntidadCreado->getCondition(),
+                $itemEntidadCreado->getSellPrice(),
+                $arrayExternalIds
+            );
+
+            $response = new ApiResponse('Created', 201, 'Item guardado', $itemDTO);
             return $this->sendJsonResponse($response);
         } else {
-            $response = new ApiResponse('ERROR', 500, 'No se pudo guardar', $itemCreado);
+            $response = new ApiResponse('ERROR', 500, 'No se pudo guardar el item', null);
             return $this->sendJsonResponse($response);
         }
 
-        /* // Instancia un ItemModel con los datos para guardarlo
-        $item = new ItemModel($newId, $datosJson['title'], $datosJson['artist'],
-            $datosJson['format'], $datosJson['year'], $datosJson['origYear'], 
-            $datosJson['label'], $datosJson['rating'], $datosJson['comment'], 
-            $datosJson['buyPrice'], $datosJson['condition'], 
-            $datosJson['sellPrice'], $datosJson['externalIds']
-        );
-
-        // Intenta guardar el ítem creado en el fichero
-        if ($this->dataHandler->writeItem($item)) {
-            $response = new ApiResponse('Created', 201, 'Item guardado', $item);
-            return $this->sendJsonResponse($response);
-        } else {
-            $response = new ApiResponse('ERROR', 500, 'No se pudo guardar', $item);
-            return $this->sendJsonResponse($response);
-        } */
     }
 
     public function update($datosJson) {
 
-        /* // Extrae el ID en una variable
-        $id = $datosJson['id'];
-        
-        // Recoge todos los items
-        $items = $this->dataHandler->readAllItems();
+        if(array_key_exists('id', $datosJson)) {
 
-        foreach($items as $item) {
-            // Si coincide el ID, modifica el item los datos recibidos
-            if($item->getId() == $id) {
+            $itemId = $datosJson['id'];
 
-                foreach($datosJson as $dato => $valor) {
-                    if($dato != 'id') {
-                        $metodoSet = "set" . ucwords($dato);
-                        $item->$metodoSet($valor);
-                    }
-                }
+            $itemEntidadActualizado = $this->itemDao->updateItem($datosJson);
+            $externalIdsEntidadActualizados = $this->itemDao->updateExternalIds($datosJson);
 
-                if($this->dataHandler->saveAllItems($items)) {
-                    $response = new ApiResponse('OK', 201, 'Item ' . $id . ' actualizado.', $item);
+            // Genera el DTO para devolverlo al cliente
+            $itemDTO = new ItemDTO(
+                $itemEntidadActualizado->getId(),
+                $itemEntidadActualizado->getTitle(),
+                $itemEntidadActualizado->getArtist(),
+                $itemEntidadActualizado->getFormat(),
+                $itemEntidadActualizado->getYear(),
+                $itemEntidadActualizado->getOrigYear(),
+                $itemEntidadActualizado->getLabel(),
+                $itemEntidadActualizado->getRating(),
+                $itemEntidadActualizado->getComment(),
+                $itemEntidadActualizado->getBuyprice(),
+                $itemEntidadActualizado->getCondition(),
+                $itemEntidadActualizado->getSellPrice(),
+                $externalIdsEntidadActualizados
+            );
+
+            if($itemDTO) {
+                $response = new ApiResponse('OK', 201, 'Item ' . $itemId . ' actualizado.', json_encode($itemDTO));
                     return $this->sendJsonResponse($response);
-                } else {
-                    $response = new ApiResponse('ERROR', 500, 'No se pudo acualizar el ítem ' . $id . '.', null);
-                    return $this->sendJsonResponse($response);
-                }
-
-                break;
+            } else {
+                $response = new ApiResponse('ERROR', 500, 'No se pudo acualizar el ítem ' . $itemId . '.', null);
+                return $this->sendJsonResponse($response);
             }
         }
-
-        // Si llega hasta aquí, no lo ha encontrado
-        $response = new ApiResponse('ERROR: Ítem no encontrado', 404, 'No existe un ítem con ID ' . $id, null);
-        return $this->sendJsonResponse($response);
- */
-        
     }
 
     public function delete($datosJson) {
         
-        /* $id = $datosJson['id'];
+        $itemId = $datosJson['id'];
 
-        $items = $this->dataHandler->readAllItems();
+        $itemAEliminar = $this->itemDao->getItemById($itemId);
 
-        foreach($items as $key => $item) {
-            // Si coincide el ID, elimina el item del array
-            if($item->getId() == $id) {
-                unset($items[$key]);
-                $items = array_values($items);
+        if($itemAEliminar) {
+            $externalIdsAEliminar = $this->itemDao->getExternalIdsByItemId($itemId);
 
-                if ($this->dataHandler->saveAllItems($items)) {
-                    $response = new ApiResponse('OK', 201, 'Item ' . $id . ' eliminado.', $item);
-                    return $this->sendJsonResponse($response);
-                } else {
-                    $response = new ApiResponse('ERROR', 500, 'Item ' . $id . ' no se pudo eliminar.', null);
-                    return $this->sendJsonResponse($response);
-                }
+            // Genera el DTO para devolverlo al cliente
+            $itemDTO = new ItemDTO(
+                $itemAEliminar->getId(),
+                $itemAEliminar->getTitle(),
+                $itemAEliminar->getArtist(),
+                $itemAEliminar->getFormat(),
+                $itemAEliminar->getYear(),
+                $itemAEliminar->getOrigYear(),
+                $itemAEliminar->getLabel(),
+                $itemAEliminar->getRating(),
+                $itemAEliminar->getComment(),
+                $itemAEliminar->getBuyprice(),
+                $itemAEliminar->getCondition(),
+                $itemAEliminar->getSellPrice(),
+                $externalIdsAEliminar
+            );
 
-                break;
+            $itemEntidadEliminado = $this->itemDao->deleteItem($itemId);
+
+            if ($itemEntidadEliminado) {
+                $response = new ApiResponse('OK', 201, 'Item ' . $itemId . ' eliminado.', json_encode($itemDTO));
+                return $this->sendJsonResponse($response);
+            } else {
+                $response = new ApiResponse('ERROR', 500, 'No se pudo eliminar el ítem con ID ' . $itemId . '.', null);
+                return $this->sendJsonResponse($response);
             }
+        } else {
+            $response = new ApiResponse('ERROR', 404, 'No existe un ítem con ID ' . $itemId . '.', null);
+            return $this->sendJsonResponse($response);
         }
-
-        // No se encontró el item
-        $response = new ApiResponse('ERROR', 404, 'No existe un ítem con ID ' . $id . '.', null);
-        return $this->sendJsonResponse($response); */
+        
     }
 
 
