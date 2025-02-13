@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: localhost:3306
--- Tiempo de generación: 13-02-2025 a las 03:07:25
+-- Tiempo de generación: 13-02-2025 a las 19:26:49
 -- Versión del servidor: 10.11.6-MariaDB-0+deb12u1
 -- Versión de PHP: 8.2.26
 
@@ -78,17 +78,17 @@ INSERT INTO `externalid` (`id`, `supplier`, `value`, `itemid`) VALUES
 DROP TABLE IF EXISTS `item`;
 CREATE TABLE `item` (
   `id` int(11) NOT NULL,
-  `title` varchar(100) DEFAULT NULL,
-  `artist` varchar(45) DEFAULT NULL,
-  `format` varchar(15) DEFAULT NULL,
-  `year` year(4) DEFAULT NULL,
-  `origyear` year(4) DEFAULT NULL,
-  `label` varchar(45) DEFAULT NULL,
-  `rating` tinyint(1) DEFAULT NULL,
-  `comment` tinytext DEFAULT NULL,
-  `buyprice` decimal(6,2) DEFAULT NULL,
-  `condition` varchar(2) DEFAULT NULL,
-  `sellprice` decimal(6,2) DEFAULT NULL
+  `title` varchar(100) NOT NULL,
+  `artist` varchar(45) NOT NULL,
+  `format` varchar(15) NOT NULL,
+  `year` year(4) NOT NULL,
+  `origyear` year(4) NOT NULL,
+  `label` varchar(45) NOT NULL,
+  `rating` tinyint(1) NOT NULL,
+  `comment` tinytext NOT NULL,
+  `buyprice` decimal(6,2) NOT NULL,
+  `condition` varchar(2) NOT NULL,
+  `sellprice` decimal(6,2) NOT NULL DEFAULT 0.00
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
