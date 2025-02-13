@@ -174,6 +174,8 @@ class ItemDAO {
 
         }
 
+        // Puede llegar vacío, no hay problema
+
         return $externalIdEntities;
 
     }
@@ -188,40 +190,44 @@ class ItemDAO {
         $stmt = $conn->query($query);
         $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        // Genera y devuelve un array de DTOs con los datos recibidos de la BD
-        
-        $itemsDTO = [];
 
-        for($i = 0; $i < count($result); $i++) {
-            $fila = $result[$i];
+        if(count($result)>0) {
 
-            $externalIdsBruto = explode(',', $fila['externalids']);
-            $externalIds = [];
-            foreach($externalIdsBruto as $unExternalId) {
-                list($supplier, $value) = explode('_', $unExternalId);
-                $externalIds[$supplier] = $value;
+            // Genera y devuelve un array de DTOs con los datos recibidos de la BD
+            
+            $itemsDTO = [];
+
+            for($i = 0; $i < count($result); $i++) {
+                $fila = $result[$i];
+
+                $externalIdsBruto = explode(',', $fila['externalids']);
+                $externalIds = [];
+                foreach($externalIdsBruto as $unExternalId) {
+                    list($supplier, $value) = explode('_', $unExternalId);
+                    $externalIds[$supplier] = $value;
+                }
+                
+                $itemsDTO[] = new ItemDTO(
+                    $fila['id'],
+                    $fila['title'],
+                    $fila['artist'],
+                    $fila['format'],
+                    $fila['year'],
+                    $fila['origyear'],
+                    $fila['label'],
+                    $fila['rating'],
+                    $fila['comment'],
+                    $fila['buyprice'],
+                    $fila['condition'],
+                    $fila['sellprice'],
+                    $externalIds
+                );
             }
 
-            echo "Original year: " . $fila['origyear'];
-            
-            $itemsDTO[] = new ItemDTO(
-                $fila['id'],
-                $fila['title'],
-                $fila['artist'],
-                $fila['format'],
-                $fila['year'],
-                $fila['origyear'],
-                $fila['label'],
-                $fila['rating'],
-                $fila['comment'],
-                $fila['buyprice'],
-                $fila['condition'],
-                $fila['sellprice'],
-                $externalIds
-            );
+            return $itemsDTO;
         }
 
-        return $itemsDTO;
+        return false;
     }
 
 
@@ -234,39 +240,45 @@ class ItemDAO {
         $stmt = $conn->query($query);
         $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        // Genera y devuelve un array de DTOs con los datos recibidos de la BD
-        
-        $itemsDTO = [];
 
-        for($i = 0; $i < count($result); $i++) {
-            $fila = $result[$i];
+        if(count($result)>0) {
 
-            $externalIdsBruto = explode(',', $fila['externalids']);
-            $externalIds = [];
-
-            foreach($externalIdsBruto as $unExternalId) {
-                list($supplier, $value) = explode('_', $unExternalId);
-                $externalIds[$supplier] = $value;
-            }
+            // Genera y devuelve un array de DTOs con los datos recibidos de la BD
             
-            $itemsDTO[] = new ItemDTO(
-                $fila['id'],
-                $fila['title'],
-                $fila['artist'],
-                $fila['format'],
-                $fila['year'],
-                $fila['origyear'],
-                $fila['label'],
-                $fila['rating'],
-                $fila['comment'],
-                $fila['buyprice'],
-                $fila['condition'],
-                $fila['sellprice'],
-                $externalIds
-            );
+            $itemsDTO = [];
+
+            for($i = 0; $i < count($result); $i++) {
+                $fila = $result[$i];
+
+                $externalIdsBruto = explode(',', $fila['externalids']);
+                $externalIds = [];
+
+                foreach($externalIdsBruto as $unExternalId) {
+                    list($supplier, $value) = explode('_', $unExternalId);
+                    $externalIds[$supplier] = $value;
+                }
+                
+                $itemsDTO[] = new ItemDTO(
+                    $fila['id'],
+                    $fila['title'],
+                    $fila['artist'],
+                    $fila['format'],
+                    $fila['year'],
+                    $fila['origyear'],
+                    $fila['label'],
+                    $fila['rating'],
+                    $fila['comment'],
+                    $fila['buyprice'],
+                    $fila['condition'],
+                    $fila['sellprice'],
+                    $externalIds
+                );
+            }
+
+            return $itemsDTO;
         }
 
-        return $itemsDTO;
+        return false;
     }
 
 
@@ -279,45 +291,51 @@ class ItemDAO {
         $stmt = $conn->query($query);
         $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        // Genera y devuelve un array de DTOs con los datos recibidos de la BD
-        
-        $itemsDTO = [];
 
-        for($i = 0; $i < count($result); $i++) {
-            $fila = $result[$i];
+        if(count($result)>0) {
 
-            $externalIdsBruto = explode(',', $fila['externalids']);
-            $externalIds = [];
-            foreach($externalIdsBruto as $unExternalId) {
-                list($supplier, $value) = explode('_', $unExternalId);
-                $externalIds[$supplier] = $value;
+            // Genera y devuelve un array de DTOs con los datos recibidos de la BD
+            
+            $itemsDTO = [];
+
+            for($i = 0; $i < count($result); $i++) {
+                $fila = $result[$i];
+
+                $externalIdsBruto = explode(',', $fila['externalids']);
+                $externalIds = [];
+                foreach($externalIdsBruto as $unExternalId) {
+                    list($supplier, $value) = explode('_', $unExternalId);
+                    $externalIds[$supplier] = $value;
+                }
+                
+                
+                $itemsDTO[] = new ItemDTO(
+                    $fila['id'],
+                    $fila['title'],
+                    $fila['artist'],
+                    $fila['format'],
+                    $fila['year'],
+                    $fila['origyear'],
+                    $fila['label'],
+                    $fila['rating'],
+                    $fila['comment'],
+                    $fila['buyprice'],
+                    $fila['condition'],
+                    $fila['sellprice'],
+                    $externalIds
+                );
             }
-            
-            
-            $itemsDTO[] = new ItemDTO(
-                $fila['id'],
-                $fila['title'],
-                $fila['artist'],
-                $fila['format'],
-                $fila['year'],
-                $fila['origyear'],
-                $fila['label'],
-                $fila['rating'],
-                $fila['comment'],
-                $fila['buyprice'],
-                $fila['condition'],
-                $fila['sellprice'],
-                $externalIds
-            );
+
+            return $itemsDTO;
         }
 
-        return $itemsDTO;
+        false;
     }
 
 
     public function create(array $datosJson) {
 
-         $conn = $this->db->getConnection();
+        $conn = $this->db->getConnection();
 
         // ------------------- Inserción en la tabla ITEM
 

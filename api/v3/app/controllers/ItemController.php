@@ -2,47 +2,77 @@
 
 namespace app\controllers;
 
+use Exception;
+use TypeError;
+use Error;
 use app\models\DAO\ItemDAO;
 use app\models\DTO\ItemDTO;
 use app\utils\ApiResponse;
 
 class ItemController {
 
-    private $itemDao;
+    private $itemDAO;
 
     public function __construct() {
-        $this->itemDao = new ItemDAO();
+        $this->itemDAO = new ItemDAO();
     }
 
     public function index() {
-        echo "Hola desde el índice de ItemController.";
+        $response = new ApiResponse('OK', 200, 'Hola, has llegado al indice de esta API, usa sus endpoints para obtener o modificar datos', null);
+        return $this->sendJsonResponse($response);
     }
 
     public function getAll() {
 
-        $items = $this->itemDao->getAllItems();
+        $items = $this->itemDAO->getAllItems();
 
         if(isset($items)) {
             $response = new ApiResponse('OK', 200, 'Todos los ítems', $items);
             return $this->sendJsonResponse($response);
         } else {
-            $response = new ApiResponse('ERROR ', 500, 'No hay ítems', null);
+            $response = new ApiResponse('ERROR', 500, 'No hay ítems', null);
             return $this->sendJsonResponse($response);
         }
 
     }
 
+    // Busca un item por ID, recaba sus entidades, las mapea a un DTO y lo devuelve en la respuesta
     public function getById($id) {
 
-        $item = $this->itemDao->getItemById($id);
+        $itemEntidad = $this->itemDAO->getItemById($id);
+        $externalIdsEntidades = $this->itemDAO->getExternalIdsByItemId($id);
 
-        // Si coincide el ID, se envía la respuesta
-        if(isset($item)) {
-            $response = new ApiResponse('OK', 200, 'Ítem con ID ' . $id, $item);
+        $arrayExternalIds = [];
+
+        foreach($externalIdsEntidades as $unExternalId) {
+            $arrayExternalIds[$unExternalId->getSupplier()] = $unExternalId->getValue();
+        }
+
+        // Si se encuentra el ítem, mapea todo a un DTO y lo envía como respuesta
+        if($itemEntidad) {
+
+            // Mapea todo al un DTO para devolverlo al cliente
+            $itemDTO = new ItemDTO(
+                $itemEntidad->getId(),
+                $itemEntidad->getTitle(),
+                $itemEntidad->getArtist(),
+                $itemEntidad->getFormat(),
+                $itemEntidad->getYear(),
+                $itemEntidad->getOrigYear(),
+                $itemEntidad->getLabel(),
+                $itemEntidad->getRating(),
+                $itemEntidad->getComment(),
+                $itemEntidad->getBuyprice(),
+                $itemEntidad->getCondition(),
+                $itemEntidad->getSellPrice(),
+                $arrayExternalIds
+            );
+
+            $response = new ApiResponse('OK', 200, 'Ítem con ID ' . $id, $itemDTO);
             return $this->sendJsonResponse($response);
         } else {
             // Si llega hasta aquí, no lo ha encontrado
-            $response = new ApiResponse('ERROR: Ítem no encontrado', 404, 'No existe un ítem con ID ' . $id, null);
+            $response = new ApiResponse('ERROR', 404, 'No existe un ítem con ID ' . $id, null);
             return $this->sendJsonResponse($response);
         }
     }
@@ -52,13 +82,13 @@ class ItemController {
 
         $artist = ucwords(str_replace('-', ' ', $artist));
 
-        $items = $this->itemDao->getItemsByArtist($artist);
+        $items = $this->itemDAO->getItemsByArtist($artist);
 
-        if(isset($items)) {
+        if($items) {
             $response = new ApiResponse('OK', 200, 'Todos los ítems del artista solicitado (' . $artist . ')', $items);
             return $this->sendJsonResponse($response);
         } else {
-            $response = new ApiResponse('ERROR ', 404, 'ERROR: Artista no encontrado (' . $artist . ')', null);
+            $response = new ApiResponse('ERROR', 404, 'Artista no encontrado (' . $artist . ')', null);
             return $this->sendJsonResponse($response);
         }
     }
@@ -66,13 +96,13 @@ class ItemController {
 
     public function getByFormat($format) {
 
-        $items = $this->itemDao->getItemsByFormat($format);
+        $items = $this->itemDAO->getItemsByFormat($format);
 
-        if(isset($items)) {
+        if($items) {
             $response = new ApiResponse('OK', 200, 'Todos los ítems del formato solicitado (' . $format . ')', $items);
             return $this->sendJsonResponse($response);
         } else {
-            $response = new ApiResponse('ERROR ', 404, 'ERROR: Formato no encontrado (' . $format . ')', null);
+            $response = new ApiResponse('ERROR', 404, 'Formato no encontrado (' . $format . ')', null);
             return $this->sendJsonResponse($response);
         }
     }
@@ -84,28 +114,60 @@ class ItemController {
 
         if ($key === 'externalIds') {
             // No se puede ordenar por externalIds
-            $response = new ApiResponse('ERROR ', 400, 'ERROR: No se puede ordenar por externalIds al ser un array', null);
+            $response = new ApiResponse('ERROR', 400, 'ERROR: No se puede ordenar por externalIds al ser un array', null);
             return $this->sendJsonResponse($response);
         }
 
-        $items = $this->itemDao->sortItemsByKey($key, $order);
-
-        if(isset($items)) {
-            $response = new ApiResponse('OK', 200, 'Listado de ítems ordenados según el criterio solicitado (' . $key . ', ' . $order . ')', $items);
-            return $this->sendJsonResponse($response);
-        } else {
-            $response = new ApiResponse('ERROR ', 404, 'ERROR: La clave para ordenar no existe (' . $key . ')', null);
+        if (!in_array(strtolower($order), ['asc', 'desc'])) {
+            // El tipo de orden es incorrecto
+            $response = new ApiResponse('ERROR', 400, 'El tipo de orden solo puede ser ASC o DESC', null);
             return $this->sendJsonResponse($response);
         }
+
+        try {
+            
+            // Intenta ordenar con la clave y el tipo de orden recibidos
+            $items = $this->itemDAO->sortItemsByKey($key, $order);
+
+            if($items) {
+                $response = new ApiResponse('OK', 200, 'Listado de ítems ordenados según el criterio solicitado (' . $key . ', ' . $order . ')', $items);
+                return $this->sendJsonResponse($response);
+            } else {
+                $response = new ApiResponse('ERROR', 404, 'No se han encontrado ítems', null);
+                return $this->sendJsonResponse($response);
+            }
+    
+        // Si la columna por la que se ha pedido ordenar no existe, o el tipo de orden es erroneo, llega una excepcion y se devuelve un 400
+        } catch (Exception $e) {
+            
+            $response = new ApiResponse('ERROR', 400, 'La clave para ordenar (' . $key . ') no existe', null);
+            return $this->sendJsonResponse($response);
+        }
+
     }
 
 
+    // Guarda un nuevo item en la BD y en caso de exito lo devuelve con 201
     public function create($datosJson) {
 
-        $idItemCreado = $this->itemDao->create($datosJson);
+        // Intenta modelar los datos a un ItemDTO para ver si están bien formados
+        try {
+            @$itemDTOModelado = new ItemDTO(
+                0, $datosJson['title'], $datosJson['artist'],
+                $datosJson['format'], $datosJson['year'], $datosJson['origYear'],
+                $datosJson['label'], $datosJson['rating'], $datosJson['comment'],
+                $datosJson['buyPrice'], $datosJson['condition'], $datosJson['sellPrice'],
+                $datosJson['externalIds']
+            );
+        } catch(TypeError) {
+            $response = new ApiResponse('ERROR', 400, 'Los datos recibidos están mal formados', $datosJson);
+            return $this->sendJsonResponse($response);
+        }
 
-        $itemEntidadCreado = $this->itemDao->getItemById($idItemCreado);
-        $externalIdsEntidadCreados = $this->itemDao->getExternalIdsByItemId($idItemCreado);
+        $idItemCreado = $this->itemDAO->create($datosJson);
+
+        $itemEntidadCreado = $this->itemDAO->getItemById($idItemCreado);
+        $externalIdsEntidadCreados = $this->itemDAO->getExternalIdsByItemId($idItemCreado);
 
         $arrayExternalIds = [];
 
@@ -141,14 +203,20 @@ class ItemController {
 
     }
 
+    // Actualiza datos de un item existente. No tienen por que recibir todos los campos, solo los que cambian.
     public function update($datosJson) {
 
         if(array_key_exists('id', $datosJson)) {
 
             $itemId = $datosJson['id'];
 
-            $itemEntidadActualizado = $this->itemDao->updateItem($datosJson);
-            $externalIdsEntidadActualizados = $this->itemDao->updateExternalIds($datosJson);
+            try {
+                $itemEntidadActualizado = $this->itemDAO->updateItem($datosJson);
+                $externalIdsEntidadActualizados = $this->itemDAO->updateExternalIds($datosJson);
+            } catch (Error) {
+                $response = new ApiResponse('ERROR', 400, 'Los datos recibidos están mal formados', $datosJson);
+                return $this->sendJsonResponse($response);
+            }
 
             $arrayExternalIds = [];
 
@@ -156,30 +224,41 @@ class ItemController {
                 $arrayExternalIds[$unExternalId->getSupplier()] = $unExternalId->getValue();
             }
 
-            // Mapea el DTO para devolverlo al cliente
-            $itemDTO = new ItemDTO(
-                $itemEntidadActualizado->getId(),
-                $itemEntidadActualizado->getTitle(),
-                $itemEntidadActualizado->getArtist(),
-                $itemEntidadActualizado->getFormat(),
-                $itemEntidadActualizado->getYear(),
-                $itemEntidadActualizado->getOrigYear(),
-                $itemEntidadActualizado->getLabel(),
-                $itemEntidadActualizado->getRating(),
-                $itemEntidadActualizado->getComment(),
-                $itemEntidadActualizado->getBuyprice(),
-                $itemEntidadActualizado->getCondition(),
-                $itemEntidadActualizado->getSellPrice(),
-                $arrayExternalIds
-            );
+            if ($itemEntidadActualizado) {
 
-            if($itemDTO) {
-                $response = new ApiResponse('OK', 201, 'Item ' . $itemId . ' actualizado.', $itemDTO);
+                // Mapea el DTO para devolverlo al cliente
+                $itemDTO = new ItemDTO(
+                    $itemEntidadActualizado->getId(),
+                    $itemEntidadActualizado->getTitle(),
+                    $itemEntidadActualizado->getArtist(),
+                    $itemEntidadActualizado->getFormat(),
+                    $itemEntidadActualizado->getYear(),
+                    $itemEntidadActualizado->getOrigYear(),
+                    $itemEntidadActualizado->getLabel(),
+                    $itemEntidadActualizado->getRating(),
+                    $itemEntidadActualizado->getComment(),
+                    $itemEntidadActualizado->getBuyprice(),
+                    $itemEntidadActualizado->getCondition(),
+                    $itemEntidadActualizado->getSellPrice(),
+                    $arrayExternalIds
+                );
+
+                if($itemDTO) {
+                    $response = new ApiResponse('OK', 201, 'Item ' . $itemId . ' actualizado.', $itemDTO);
+                        return $this->sendJsonResponse($response);
+                } else {
+                    $response = new ApiResponse('ERROR', 500, 'No se pudo acualizar el ítem ' . $itemId . '.', null);
                     return $this->sendJsonResponse($response);
+                }
             } else {
-                $response = new ApiResponse('ERROR', 500, 'No se pudo acualizar el ítem ' . $itemId . '.', null);
+                // No ha encontrado el item
+                $response = new ApiResponse('ERROR', 404, 'No existe un ítem con ID ' . $itemId, null);
                 return $this->sendJsonResponse($response);
             }
+        } else {
+            // No ha encontrado el item
+            $response = new ApiResponse('ERROR', 400, 'Es necesario un ID para actualizar un ítem', null);
+            return $this->sendJsonResponse($response);
         }
     }
 
@@ -187,10 +266,16 @@ class ItemController {
         
         $itemId = $datosJson['id'];
 
-        $itemAEliminar = $this->itemDao->getItemById($itemId);
+        // Comprueba si los datos están bien formados ("id" con valor entero)
+        try {
+            $itemAEliminar = $this->itemDAO->getItemById($itemId);
+        } catch (TypeError) {
+            $response = new ApiResponse('ERROR', 400, 'TypeError: Los datos recibidos están mal formados', $datosJson);
+            return $this->sendJsonResponse($response);
+        }
 
         if($itemAEliminar) {
-            $externalIdsAEliminar = $this->itemDao->getExternalIdsByItemId($itemId);
+            $externalIdsAEliminar = $this->itemDAO->getExternalIdsByItemId($itemId);
 
             // Genera el DTO para devolverlo al cliente
             $itemDTO = new ItemDTO(
@@ -209,7 +294,7 @@ class ItemController {
                 $externalIdsAEliminar
             );
 
-            $itemEntidadEliminado = $this->itemDao->deleteItem($itemId);
+            $itemEntidadEliminado = $this->itemDAO->deleteItem($itemId);
 
             if ($itemEntidadEliminado) {
                 $response = new ApiResponse('OK', 200, 'Item ' . $itemId . ' eliminado.', null);

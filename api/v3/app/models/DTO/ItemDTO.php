@@ -34,14 +34,16 @@ class ItemDTO implements JsonSerializable {
      * @param string $comment Comentarios sobre el ítem.
      * @param float $buyPrice El precio de compra del ítem.
      * @param string $condition La condición del ítem (ej. "M", "NM").
-     * @param float $sellPrice El precio de venta del ítem, por defecto 0.
+     * @param float $sellPrice El precio de venta del ítem.
      * @param array $externalIds Identificadores externos asociados al ítem, por defecto un array vacío.
+     * 
+     * Los pertenecientes al Item pueden ser NULL, excepto el ID
      */
 
     public function __construct(
-        int $id, string $title, string $artist, string $format, int $year, 
-        int $origYear, string $label, int $rating, string $comment, 
-        float $buyPrice, string $condition, float $sellPrice = 0, array $externalIds = []
+        int $id, ?string $title = null, ?string $artist = null, ?string $format = null, ?int $year = null, 
+        ?int $origYear = null, ?string $label = null, ?int $rating = null, ?string $comment = null, 
+        ?float $buyPrice = null, ?string $condition = null, ?float $sellPrice = null, array $externalIds = []
     ) {
 
         $this->id = $id;

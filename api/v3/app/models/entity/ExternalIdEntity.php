@@ -17,6 +17,7 @@ class ExternalIdEntity {
      * @param string $supplier El proveedor del ID externo.
      * @param string $value El valor del ID externo.
      * @param int $itemid El ID del item al que se hace referencia
+     * 
      */
 
     public function __construct(
