@@ -7,6 +7,7 @@ class ApiResponse {
     private $response = [
         'status' => '',
         'code' => '',
+        'respcode' => '',
         'description' => '',
         'data' => '',
     ];
@@ -15,7 +16,9 @@ class ApiResponse {
         string $status, int $code = 0, string $description = '', $data = []
     ) {
         $this->response['status'] = $status;
-        $this->response['code'] = $code;
+        $this->response['code'] = $code == 204 ? 200 : $code;
+        // Para los code 204 se usa el 200 para que llegue información en el body
+        $this->response['respcode'] = $code;
         $this->response['description'] = $description;
         $this->response['data'] = $data;
     }
@@ -30,6 +33,11 @@ class ApiResponse {
         return $this->response['code'];
     }
 
+    // Getter de RespCode
+    public function getRespCode() {
+        return $this->response['respcode'];
+    }
+
     // Getter de Description
     public function getDescription() {
         return $this->response['description'];
@@ -42,7 +50,12 @@ class ApiResponse {
 
     // Getter de la respuesta completa
     public function getResponse() {
-        return $this->response;
+        return [
+            'status' => $this->response['status'],
+            'code' => $this->response['respcode'],
+            'description' => $this->response['description'],
+            'data' => $this->response['data']
+        ];
     }
 
     // Setter de Status
@@ -72,7 +85,7 @@ class ApiResponse {
 
 
     public function toJson() {
-        return json_encode($this->response, JSON_PRETTY_PRINT);
+        return json_encode($this->getResponse(), JSON_PRETTY_PRINT);
     }
 
 }

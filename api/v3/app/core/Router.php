@@ -27,17 +27,20 @@ class Router {
 
     public function match($url) {
 
+        $url = urldecode($url);
+
         // Si la query contiene espacios no es válida. Se devuelve el error y se para la ejecución
 
-        if (str_contains(urldecode($url), ' ')) {
+        if (str_contains($url, ' ')) {
+            
             header("HTTP/1.0 403 Forbidden");
             http_response_code(403);
-            echo 'ERROR 403: La URL no puede contener espacios: "' . urldecode($url) . '"';
+            echo 'ERROR 403: La URL no puede contener espacios: "' . $url . '"';
 
             die();
         }
 
-        $url = urldecode($url);
+        
 
         // Elimina la base de la URL solicitada
         $url = str_replace(BASE_URL, '', $url);

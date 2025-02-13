@@ -31,16 +31,14 @@ class ItemEntity {
      * @param string $comment Comentarios sobre el ítem.
      * @param float $buyPrice El precio de compra del ítem.
      * @param string $condition La condición del ítem (ej. "M", "NM").
-     * @param float $sellPrice El precio de venta del ítem.
-     * 
-     * Todos NULL por defecto excepto el ID
+     * @param float $sellPrice El precio de venta del ítem. 
      * 
      */
 
     public function __construct(
-        int $id, ?string $title = null, ?string $artist = null, ?string $format = null, ?int $year = null, 
-        ?int $origYear = null, ?string $label = null, ?int $rating = null, ?string $comment = null, ?float $buyPrice = null, 
-        ?string $condition = null, ?float $sellPrice = null
+        int $id, string $title, string $artist, string $format, int $year, 
+        int $origYear, string $label, int $rating, string $comment, float $buyPrice, 
+        string $condition, float $sellPrice
     ) {
 
         $this->id = $id;

@@ -2,6 +2,7 @@
 
 namespace app\core;
 use PDO;
+use PDOException;
 
 ini_set('display_errors','On');
 
@@ -15,11 +16,21 @@ class Database {
 
     private function __construct() {
         $this->loadConfig();
-        $this->connection = new PDO(
-            "mysql:host={$this->config['host']};dbname={$this->config['dbName']}",
-            $this->config['user'],
-            $this->config['password']
-        );
+
+        try {
+            $this->connection = new PDO(
+                "mysql:host={$this->config['host']};dbname={$this->config['dbName']}",
+                $this->config['user'],
+                $this->config['password']
+            );
+        } catch(PDOException) {
+            header("HTTP/1.0 500 Internal Server Error");
+            http_response_code(500);
+            echo 'ERROR 500: No se puede conectar a la base de datos, revise la configuración en config/db-config.json';
+
+            die();
+        }
+        
     }
 
     public function loadConfig() {
