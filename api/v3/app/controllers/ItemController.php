@@ -48,8 +48,6 @@ class ItemController {
     }
 
 
-
-
     public function getByArtist($artist) {
 
         $artist = ucwords(str_replace('-', ' ', $artist));
@@ -152,7 +150,13 @@ class ItemController {
             $itemEntidadActualizado = $this->itemDao->updateItem($datosJson);
             $externalIdsEntidadActualizados = $this->itemDao->updateExternalIds($datosJson);
 
-            // Genera el DTO para devolverlo al cliente
+            $arrayExternalIds = [];
+
+            foreach($externalIdsEntidadActualizados as $unExternalId) {
+                $arrayExternalIds[$unExternalId->getSupplier()] = $unExternalId->getValue();
+            }
+
+            // Mapea el DTO para devolverlo al cliente
             $itemDTO = new ItemDTO(
                 $itemEntidadActualizado->getId(),
                 $itemEntidadActualizado->getTitle(),
@@ -166,11 +170,11 @@ class ItemController {
                 $itemEntidadActualizado->getBuyprice(),
                 $itemEntidadActualizado->getCondition(),
                 $itemEntidadActualizado->getSellPrice(),
-                $externalIdsEntidadActualizados
+                $arrayExternalIds
             );
 
             if($itemDTO) {
-                $response = new ApiResponse('OK', 201, 'Item ' . $itemId . ' actualizado.', json_encode($itemDTO));
+                $response = new ApiResponse('OK', 201, 'Item ' . $itemId . ' actualizado.', $itemDTO);
                     return $this->sendJsonResponse($response);
             } else {
                 $response = new ApiResponse('ERROR', 500, 'No se pudo acualizar el ítem ' . $itemId . '.', null);
@@ -208,7 +212,7 @@ class ItemController {
             $itemEntidadEliminado = $this->itemDao->deleteItem($itemId);
 
             if ($itemEntidadEliminado) {
-                $response = new ApiResponse('OK', 201, 'Item ' . $itemId . ' eliminado.', json_encode($itemDTO));
+                $response = new ApiResponse('OK', 200, 'Item ' . $itemId . ' eliminado.', null);
                 return $this->sendJsonResponse($response);
             } else {
                 $response = new ApiResponse('ERROR', 500, 'No se pudo eliminar el ítem con ID ' . $itemId . '.', null);

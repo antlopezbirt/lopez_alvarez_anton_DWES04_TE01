@@ -432,16 +432,18 @@ class ItemDAO {
 
     public function updateExternalIds(array $datosJson) {
 
-        /*
-            Si en los datos para actualizar hay externalIds lo primero que hay que 
-            hacer es eliminar de la BD todos los que pertenezcan al Item, ya que los 
-            externaIds llegan sin ID propio (son solo clave-valor), y a continuación
-            insertar los que hayan llegado.
-        */
+
+        $itemId = $datosJson['id'];
 
         if(array_key_exists('externalIds', $datosJson)) {
 
-            $itemId = $datosJson['id'];
+            /*
+                Si en los datos para actualizar hay externalIds lo primero que hay que 
+                hacer es eliminar de la BD todos los que pertenezcan al Item, ya que los 
+                externaIds llegan sin ID propio (son solo clave-valor), y a continuación
+                insertar los que hayan llegado.
+            */
+
             $externalIds = $datosJson['externalIds'];
 
             $conn = $this->db->getConnection();
