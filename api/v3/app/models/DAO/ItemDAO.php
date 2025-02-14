@@ -86,40 +86,6 @@ class ItemDAO {
     }
 
 
-
-    // // Devuelve un DTO a partir de un item buscado por ID (versión sin entities)
-    
-    // public function getItemById($id) {
-
-    //     $conn = $this->db->getConnection();
-    //     $query = "SELECT item.*, JSON_OBJECTAGG(externalid.supplier, externalid.value) AS externalids ";
-    //     $query .= "FROM item JOIN externalid ON item.id = externalid.itemid GROUP BY item.id HAVING item.id = '{$id}'";
-    //     $stmt = $conn->query($query);
-    //     $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-    //     // Modela y devuelve un DTO con los datos recibidos de la BD
-        
-    //     $itemDTO[] = new ItemDTO(
-    //         $result['id'],
-    //         $result['title'],
-    //         $result['artist'],
-    //         $result['format'],
-    //         $result['year'],
-    //         $result['origyear'],
-    //         $result['label'],
-    //         $result['rating'],
-    //         $result['comment'],
-    //         $result['buyprice'],
-    //         $result['condition'],
-    //         $result['sellPrice'],
-    //         json_decode($result['externalids'])
-    //     );
-
-    //     return $itemDTO;
-
-    // }
-
-
     // Devuelve una ItemEntity a partir de un item buscado por ID
 
     public function getItemById(int $id) {
